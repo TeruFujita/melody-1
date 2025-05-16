@@ -10,8 +10,9 @@ type Step = "input" | "results" | "create";
 
 export default function Create() {
   const [step, setStep] = useState<Step>("input");
-  const [emotion, setEmotion] = useState<any>(null);
-  const [song, setSong] = useState<any>(null);
+  const [emotion, setEmotion] = useState<string | null>(null);
+  type Song = { id: number; title: string; artist: string; image: string };
+  const [song, setSong] = useState<Song | null>(null);
 
   //仮の音楽データ
   const musicData = [
@@ -25,7 +26,7 @@ export default function Create() {
     setStep("results");
     // ここでAIとSpotify APIを呼び出して音楽データを取得する
   };
-  const handleSongSelect = (song: any) => {
+  const handleSongSelect = (song: Song) => {
     setSong(song);
     setStep("create");
   };
@@ -39,11 +40,13 @@ export default function Create() {
           <SongResults
             songs={musicData}
             onSelect={handleSongSelect}
-            emotion={emotion}
+            emotion={emotion ?? ""}
           />
         );
       case "create":
-        return <CardCreator song={song} emotion={emotion} />;
+        return song ? (
+          <CardCreator song={song} emotion={emotion ?? ""} />
+        ) : null;
       default:
         return <EmotionInput onSubmit={handleEmotionSubmit} />;
     }
