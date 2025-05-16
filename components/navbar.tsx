@@ -26,12 +26,6 @@ export function Navbar() {
           >
             履歴
           </Link>
-          <Link
-            href="/about"
-            className="text-gray-700 hover:text-pink-500 transition-colors"
-          >
-            使い方
-          </Link>
         </nav>
 
         <div className="flex items-center gap-4">
