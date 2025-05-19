@@ -3,7 +3,7 @@ export async function POST() {
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
   const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
-  const res = await fetch("htpps://accounts.spotify.com/api/token", {
+  const res = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
       Authorization: `Basic ${auth}`,
