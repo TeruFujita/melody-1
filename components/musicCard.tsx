@@ -16,8 +16,8 @@ export function MusicCard({ song, message }: MusicCardProps) {
     <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-pink-100 to-purple-100">
       <div className="relative h-48 w-full">
         <Image
-          src={song.image || "/placeholder.svg"}
-          alt={song.title}
+          src={song.image}
+          alt={`${song.title} by ${song.artist}`}
           fill
           className="object-cover"
         />
