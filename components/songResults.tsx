@@ -17,6 +17,8 @@ interface Song {
   title: string;
   artist: string;
   image: string;
+  preview_url?: string;
+  spotify_url?: string;
 }
 
 interface SongResultsProps {
@@ -53,7 +55,7 @@ export default function SongResults({
                 <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
                   <Image
                     src={song.image || "/placeholder.svg"}
-                    alt={song.title}
+                    alt={`${song.title} by ${song.artist}`}
                     fill
                     className="object-cover"
                   />
@@ -63,14 +65,35 @@ export default function SongResults({
                     {song.title}
                   </h3>
                   <p className="text-gray-600">{song.artist}</p>
-                  <div className="mt-2 flex justify-between items-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-pink-600 hover:text-pink-700 hover:bg-pink-50 p-0"
-                    >
-                      プレビュー
-                    </Button>
+
+                  <div className="mt-2 flex flex-col gap-1">
+                    {song.preview_url ? (
+                      <audio
+                        controls
+                        src={song.preview_url}
+                        className="w-full"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-400">
+                        プレビューなし
+                      </span>
+                    )}
+
+                    {song.spotify_url && (
+                      <a
+                        href={song.spotify_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-pink-600 hover:text-pink-800 underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Spotifyで聴く
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="mt-3 flex justify-end">
                     <Button
                       variant="outline"
                       size="sm"
