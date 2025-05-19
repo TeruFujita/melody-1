@@ -15,16 +15,25 @@ export default function Create() {
   const [song, setSong] = useState<Song | null>(null);
 
   //仮の音楽データ
-  const musicData = [
-    { id: 1, title: "Song A", artist: "Artist A", image: "/placeholder1.jpg" },
-    { id: 2, title: "Song B", artist: "Artist B", image: "/placeholder2.jpg" },
-    { id: 3, title: "Song C", artist: "Artist C", image: "/placeholder3.jpg" },
-  ];
+  // const musicData = [
+  //   { id: 1, title: "Song A", artist: "Artist A", image: "/placeholder1.jpg" },
+  //   { id: 2, title: "Song B", artist: "Artist B", image: "/placeholder2.jpg" },
+  //   { id: 3, title: "Song C", artist: "Artist C", image: "/placeholder3.jpg" },
+  // ];
 
-  const handleEmotionSubmit = (emotion: string) => {
+  const handleEmotionSubmit = async (emotion: string) => {
     setEmotion(emotion);
     setStep("results");
     // ここでAIとSpotify APIを呼び出して音楽データを取得する
+
+    //spotify APIを呼び出して音楽データを取得する
+    const res = await fetch("api/search-songs", {
+      method: "POST",
+      body: JSON.stringify({ keyword: emotion }),
+    });
+
+    const data = await res.json();
+    setSong(data.tracks);
   };
   const handleSongSelect = (song: Song) => {
     setSong(song);
@@ -38,7 +47,7 @@ export default function Create() {
       case "results":
         return (
           <SongResults
-            songs={musicData}
+            songs={song ? [song] : []}
             onSelect={handleSongSelect}
             emotion={emotion ?? ""}
           />
