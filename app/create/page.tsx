@@ -21,7 +21,7 @@ export default function Create() {
   //   { id: 3, title: "Song C", artist: "Artist C", image: "/placeholder3.jpg" },
   // ];
 
-  const handleEmotionSubmit = async (emotion: string) => {
+  const handleEmotionSubmit = async (analyzeResult: string) => {
     setEmotion(emotion);
     setStep("results");
     // ここでAIとSpotify APIを呼び出して音楽データを取得する
@@ -29,7 +29,7 @@ export default function Create() {
     //spotify APIを呼び出して音楽データを取得する
     const res = await fetch("api/search-songs", {
       method: "POST",
-      body: JSON.stringify({ keyword: emotion }),
+      body: JSON.stringify({ keyword: analyzeResult }),
     });
 
     const data = await res.json();
