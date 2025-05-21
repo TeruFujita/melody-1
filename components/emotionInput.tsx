@@ -12,13 +12,13 @@ import { Textarea } from "./ui/textarea";
 import { useState } from "react";
 
 interface EmotionInoutProps {
-  onSubmit: (text: string) => void;
+  onSubmit: (analyzeResult: string) => void;
 }
 
 export default function EmotionInput({ onSubmit }: EmotionInoutProps) {
   const [emotion, setEmotion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError]  = useState("");
+  const [error, setError] = useState("");
 
   const example = [
     "今日は疲れた。癒しが欲しい",
@@ -29,31 +29,37 @@ export default function EmotionInput({ onSubmit }: EmotionInoutProps) {
 
   const handleSubmit = async () => {
     if (!emotion.trim()) return;
-  
+
     setIsLoading(true);
     setError("");
-    
+
     try {
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
+      const response = await fetch("/api/analyze", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ text: emotion }),
       });
-  
+
       const data = await response.json();
-  
+
       if (!response.ok) {
-        throw new Error(data.error || data.details || '感情の分析中にエラーが発生しました');
+        throw new Error(
+          data.error || data.details || "感情の分析中にエラーが発生しました"
+        );
       }
-  
+
+      // ここで、AIからのレスポンスを処理
       console.log("Generated keywords:", data.keywords);
-      onSubmit(emotion);
+      onSubmit(data.keywords);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '感情の分析中にエラーが発生しました';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "感情の分析中にエラーが発生しました";
       setError(errorMessage);
-      console.error('Full error:', err);
+      console.error("Full error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -76,12 +82,8 @@ export default function EmotionInput({ onSubmit }: EmotionInoutProps) {
           value={emotion}
           onChange={(e) => setEmotion(e.target.value)}
         />
-        
-        {error && (
-        <div className="mt-4 text-red-500 text-sm">
-        {error}
-        </div>
-        )}
+
+        {error && <div className="mt-4 text-red-500 text-sm">{error}</div>}
 
         <div className="mt-6">
           <p className="text-sm text-gray-500 mb-2">入力例:</p>
