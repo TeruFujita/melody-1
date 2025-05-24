@@ -61,7 +61,7 @@ export default function SongResults({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {uniqueSongs.map((song, idx) => {
+          {uniqueSongs.map((song) => {
             const songKey = `${song.id ?? "noid"}-${song.title}-${song.artist}`;
             return (
               <div
@@ -71,7 +71,7 @@ export default function SongResults({
               >
                 <div className="flex items-start gap-4">
                   <div className="relative w-24 h-24 flex-shrink-0">
-                    <img
+                    <Image
                       src={song.image || "/placeholder.svg"}
                       alt={song.title}
                       className="w-full h-full object-cover rounded-lg"
