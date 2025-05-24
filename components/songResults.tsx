@@ -72,6 +72,8 @@ export default function SongResults({
                 <div className="flex items-start gap-4">
                   <div className="relative w-24 h-24 flex-shrink-0">
                     <Image
+                      width={96}
+                      height={96}
                       src={song.image || "/placeholder.svg"}
                       alt={song.title}
                       className="w-full h-full object-cover rounded-lg"
@@ -94,7 +96,13 @@ export default function SongResults({
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          toggleLike(songKey);
+                          console.log("いいねボタン押下", song);
+                          toggleLike({
+                            title: song.title,
+                            artist: song.artist,
+                            image: song.image,
+                            spotify_url: song.spotify_url
+                          });
                         }}
                       >
                         <HeartIcon

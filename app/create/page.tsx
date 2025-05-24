@@ -6,6 +6,7 @@ import SongResults from "../../components/songResults";
 import CardCreator from "../../components/cardCreator";
 import { Navbar } from "@/components/navbar";
 import { extractSongsAsJson } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 type Step = "input" | "results" | "create";
 
@@ -55,9 +56,11 @@ export default function Create() {
     setStep("results");
     let songList: Song[] = [];
     try {
-      songList = JSON.parse(analyzeResult);
+      // 余計なバッククォートやjsonラベルを除去
+      let cleaned = analyzeResult.replace(/```json|```/g, '').trim();
+      songList = JSON.parse(cleaned);
       if (!Array.isArray(songList)) {
-        songList = extractSongsAsJson(analyzeResult) as Song[];
+        songList = extractSongsAsJson(cleaned) as Song[];
       }
     } catch {
       songList = extractSongsAsJson(analyzeResult) as Song[];
@@ -141,6 +144,25 @@ export default function Create() {
     } catch {}
     setSelectedSong({ ...song, preview_url, spotify_url, id: song.id });
     setStep("create");
+
+    // --- 履歴をSupabaseに保存 ---
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await fetch("/api/history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: user.id,
+            emotion,
+            songTitle: song.title,
+            songArtist: song.artist,
+            songImageUrl: song.image,
+            spotifyUrl: song.spotify_url || spotify_url,
+          }),
+        });
+      }
+    } catch (e) { console.error("履歴保存エラー", e); }
   };
 
   const handleRetry = async () => {

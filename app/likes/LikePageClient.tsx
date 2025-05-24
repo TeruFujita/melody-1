@@ -22,16 +22,16 @@ export default function LikesPageClient() {
   useEffect(() => {
     const fetchLikes = async () => {
       setLoading(true);
-      //supabaseからuserIdを取得
+      //supabaseからuser_idを取得
       const { data } = await supabase.auth.getUser();
-      const userId = data?.user?.id;
-      if (!userId) {
+      const user_id = data?.user?.id;
+      if (!user_id) {
         setLikeItems([]);
         setLoading(false);
         return;
       }
       //Api Routeからいいねデータを取得
-      const res = await fetch(`/api/likes?userId=${userId}`);
+      const res = await fetch(`/api/likes?user_id=${user_id}`);
       if (res.ok) {
         const likes = await res.json();
         setLikeItems(likes);

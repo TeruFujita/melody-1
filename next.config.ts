@@ -3,7 +3,12 @@ import type { NextConfig } from "next";
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   images: {
-    domains: ['i.scdn.co'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'i.scdn.co',
+      },
+    ],
   },
   webpack: (config: any, { isServer }: { isServer: boolean }) => {
     if (!isServer) {

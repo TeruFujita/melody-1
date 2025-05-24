@@ -23,15 +23,15 @@ export default function HistoryPageClient() {
   useEffect(() => {
     const fetchHistory = async () => {
       const { data } = await supabase.auth.getUser();
-      const userId = data.user?.id;
-      if (!userId) {
+      const user_id = data.user?.id;
+      if (!user_id) {
         console.error("User not authenticated");
         setHistoryItems([]);
         setLoading(false);
         return;
       }
 
-      const res = await fetch(`api/history?userId=${userId}`);
+      const res = await fetch(`api/history?user_id=${user_id}`);
       if (!res.ok) {
         setHistoryItems([]);
       } else {
