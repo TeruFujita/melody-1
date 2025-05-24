@@ -12,15 +12,8 @@ import {
 import { Button } from "./ui/button";
 import { HeartIcon, RefreshCwIcon } from "lucide-react";
 import { useLikes } from "@/lib/likes-context";
-
-interface Song {
-  id?: number;
-  title: string;
-  artist: string;
-  image: string;
-  preview_url?: string;
-  spotify_url?: string;
-}
+import { Song } from "@/types/song";
+import { useRef, useState } from "react";
 
 interface SongResultsProps {
   songs: Song[];
@@ -36,8 +29,10 @@ export default function SongResults({
   onRetry,
 }: SongResultsProps) {
   const { isLiked, toggleLike } = useLikes();
+  const playerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const players = useRef<{ [key: string]: YT.Player | null }>({});
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
 
-  // 曲の重複（タイトル＋アーティスト）を排除
   const uniqueSongs: Song[] = [];
   const seen = new Set<string>();
   songs.forEach((song) => {
@@ -47,6 +42,63 @@ export default function SongResults({
       seen.add(key);
     }
   });
+
+  const handlePlay = (song: Song, songKey: string) => {
+    const videoId = song.youtubeVideoId;
+    if (!videoId) return;
+
+    if (players.current[songKey]) {
+      const player = players.current[songKey]!;
+      if (activeVideoId === videoId) {
+        player.pauseVideo();
+        setActiveVideoId(null);
+      } else {
+        player.playVideo();
+        setActiveVideoId(videoId);
+      }
+      return;
+    }
+
+    const createPlayer = () => {
+      const player = new window.YT.Player(playerRefs.current[songKey]!, {
+        height: "0",
+        width: "0",
+        videoId,
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          mute: 0,
+          rel: 0,
+          modestbranding: 1,
+          fs: 0,
+          iv_load_policy: 3,
+        },
+        events: {
+          onReady: (event) => {
+            event.target.setVolume(100);
+            event.target.playVideo();
+            setActiveVideoId(videoId);
+          },
+          onStateChange: (event) => {
+            if (event.data === window.YT.PlayerState.ENDED) {
+              setActiveVideoId(null);
+            }
+          },
+        },
+      });
+
+      players.current[songKey] = player;
+    };
+
+    if (!window.YT || !window.YT.Player) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.body.appendChild(tag);
+      window.onYouTubeIframeAPIReady = createPlayer;
+    } else {
+      createPlayer();
+    }
+  };
 
   return (
     <Card className="bg-white/90 backdrop-blur-sm shadow-xl border-none">
@@ -74,6 +126,8 @@ export default function SongResults({
                     <Image
                       src={song.image || "/placeholder.svg"}
                       alt={song.title}
+                      width={50}
+                      height={50}
                       className="w-full h-full object-cover rounded-lg"
                     />
                   </div>
@@ -105,6 +159,30 @@ export default function SongResults({
                         {isLiked(songKey) ? "いいね済み" : "いいね"}
                       </Button>
                     </div>
+                    {song.youtubeVideoId && (
+                      <>
+                        <div
+                          id={`player-${songKey}`}
+                          ref={(el) => {
+                            playerRefs.current[songKey] = el;
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-blue-600 mt-2"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handlePlay(song, songKey);
+                          }}
+                        >
+                          {activeVideoId === song.youtubeVideoId
+                            ? "停止"
+                            : "プレビュー再生"}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
