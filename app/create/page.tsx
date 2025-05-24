@@ -35,13 +35,6 @@ export default function Create() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
 
-  //仮の音楽データ
-  // const musicData = [
-  //   { id: 1, title: "Song A", artist: "Artist A", image: "/placeholder1.jpg" },
-  //   { id: 2, title: "Song B", artist: "Artist B", image: "/placeholder2.jpg" },
-  //   { id: 3, title: "Song C", artist: "Artist C", image: "/placeholder3.jpg" },
-  // ];
-
   const handleEmotionSubmit = async (analyzeResult: string, userEmotion: string) => {
     setEmotion(userEmotion);
     setStep("results");
@@ -140,14 +133,12 @@ export default function Create() {
         return <EmotionInput onSubmit={(result, userEmotion) => handleEmotionSubmit(result, userEmotion)} />;
       case "results":
         return (
-          <>
-            <SongResults
-              songs={songs}
-              onSelect={handleSongSelect}
-              emotion={emotion}
-              onRetry={handleRetry}
-            />
-          </>
+          <SongResults
+            songs={songs}
+            onSelect={handleSongSelect}
+            emotion={emotion}
+            onRetry={handleRetry}
+          />
         );
       case "create":
         return selectedSong ? (
@@ -161,7 +152,7 @@ export default function Create() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-purple-50">
       <Navbar />
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-center mb-8">
             <div className="flex items-center">
@@ -211,7 +202,6 @@ export default function Create() {
               </div>
             </div>
           </div>
-
           {renderStep()}
         </div>
       </main>
