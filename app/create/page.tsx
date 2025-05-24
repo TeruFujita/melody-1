@@ -22,7 +22,7 @@ function normalize(str: string): string {
 export default function Create() {
   const [step, setStep] = useState<Step>("input");
   const [emotion, setEmotion] = useState<string>("");
-  type Song = { title: string; artist: string; image: string };
+  type Song = { title: string; artist: string; image: string; preview_url?: string; spotify_url?: string; id?: number };
   const [songs, setSongs] = useState<Song[]>([]);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
 
@@ -56,20 +56,30 @@ export default function Create() {
           body: JSON.stringify({ keyword: `${song.title} ${song.artist}` }),
         });
         const data = await res.json();
-        let matchedTrack = null;
+        let matchedTrack: any = null;
         if (data.tracks && data.tracks.length > 0) {
-          // 正規化して完全一致する曲を探す
+          // 正規化して完全一致する曲を探す（曲名・アーティスト名ともに）
           matchedTrack = data.tracks.find(
-            (track) =>
+            (track: any) =>
               normalize(track.title) === normalize(song.title) &&
-              normalize(track.artist).includes(normalize(song.artist))
+              normalize(track.artist) === normalize(song.artist)
           );
+          // 完全一致がなければ部分一致（アーティスト名含む）
+          if (!matchedTrack) {
+            matchedTrack = data.tracks.find(
+              (track: any) =>
+                normalize(track.title) === normalize(song.title) &&
+                normalize(track.artist).includes(normalize(song.artist))
+            );
+          }
+          // それもなければ最初の候補
           if (!matchedTrack) matchedTrack = data.tracks[0];
           updatedSongs.push({
             ...song,
             image: matchedTrack.image || song.image,
             preview_url: matchedTrack.preview_url,
             spotify_url: matchedTrack.spotify_url,
+            id: matchedTrack.id,
           });
         } else {
           updatedSongs.push(song);
@@ -99,7 +109,7 @@ export default function Create() {
         spotify_url = data.tracks[0].spotify_url;
       }
     } catch {}
-    setSelectedSong({ ...song, preview_url, spotify_url });
+    setSelectedSong({ ...song, preview_url, spotify_url, id: song.id });
     setStep("create");
   };
 
@@ -132,7 +142,7 @@ export default function Create() {
         );
       case "create":
         return selectedSong ? (
-          <CardCreator song={selectedSong} emotion={emotion} />
+          <CardCreator song={{ ...selectedSong, ...(selectedSong.id ? { id: selectedSong.id } : {}) }} emotion={emotion} />
         ) : null;
       default:
         return <EmotionInput onSubmit={(result, userEmotion) => handleEmotionSubmit(result, userEmotion)} />;
@@ -162,12 +172,14 @@ export default function Create() {
                 }`}
               ></div>
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   step === "results" || step === "create"
                     ? "bg-pink-500 text-white"
                     : "bg-pink-200 text-pink-700"
-                }`}
-                onClick={() => setStep("results")}
+                } ${emotion ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}
+                onClick={() => {
+                  if (emotion) setStep("results");
+                }}
               >
                 2
               </div>
@@ -177,12 +189,14 @@ export default function Create() {
                 }`}
               ></div>
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   step === "create"
                     ? "bg-pink-500 text-white"
                     : "bg-pink-200 text-pink-700"
-                }`}
-                onClick={() => setStep("create")}
+                } ${emotion ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}
+                onClick={() => {
+                  if (emotion) setStep("create");
+                }}
               >
                 3
               </div>

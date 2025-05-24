@@ -16,10 +16,12 @@ import { MusicCard } from "./musicCard";
 
 interface CardCreatorProps {
   song: {
-    id: number;
+    id?: number;
     title: string;
     artist: string;
     image: string;
+    preview_url?: string;
+    spotify_url?: string;
   };
   emotion: string;
 }

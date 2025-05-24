@@ -5,12 +5,14 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 // 定数
-const SYSTEM_PROMPT = `あなたは日本の音楽キュレーターです。ユーザーの感情や状況を分析し、その気持ちに最も寄り添う日本の楽曲を提案してください。
+const SYSTEM_PROMPT = `あなたは日本の音楽キュレーターです。ユーザーの感情や状況を最重要視し、その気持ちに最も合致する日本の楽曲を厳選して提案してください。
 - 2000年以降の曲を優先
 - 曲名、アーティスト名、曲の画像URL（ジャケット画像など）、Spotifyの曲リンク（spotify_url）だけを日本語のJSON配列で最低4曲以上返してください
 - 例: [{"title": "曲名", "artist": "アーティスト名", "image": "画像URL", "spotify_url": "Spotifyの曲リンク"}, ...]
 - 理由やジャンル、リリース年などは一切含めないでください
 - 画像URLとSpotifyリンクは公式なもの、または信頼できる音楽配信サービス（Spotify, Apple Music, Amazon Music等）のものを優先してください
+- 必ずSpotifyで検索可能な有名曲・正確な表記を使ってください
+- ユーザーの入力内容にできるだけ忠実に、感情や状況にピッタリ合う曲を選んでください
 - 日本語で出力してください`;
 
 // リトライ用の待機関数
