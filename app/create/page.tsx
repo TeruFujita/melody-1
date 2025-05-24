@@ -6,8 +6,9 @@ import SongResults from "../../components/songResults";
 import CardCreator from "../../components/cardCreator";
 import { Navbar } from "@/components/navbar";
 import { extractSongsAsJson } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
-type Step = "input" | "results" | "create";
+type Step = "input" | "results" | "create" | "loading" | "result";
 
 type SpotifyTrack = {
   id: string;
@@ -44,6 +45,8 @@ export default function Create() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   // 表示済み曲のキー履歴を管理
   const [shownSongKeys, setShownSongKeys] = useState<string[]>([]);
+  const [displaySongs, setDisplaySongs] = useState<Song[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   // 曲の一意キーを生成
   function getSongKey(song: Song) {
@@ -51,75 +54,41 @@ export default function Create() {
   }
 
   const handleEmotionSubmit = async (analyzeResult: string, userEmotion: string) => {
-    setEmotion(userEmotion);
-    setStep("results");
-    let songList: Song[] = [];
+    setStep("loading");
     try {
-      songList = JSON.parse(analyzeResult);
-      if (!Array.isArray(songList)) {
-        songList = extractSongsAsJson(analyzeResult) as Song[];
-      }
-    } catch {
-      songList = extractSongsAsJson(analyzeResult) as Song[];
-    }
+      const res = await fetch("/api/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emotion: analyzeResult }),
+      });
+      if (!res.ok) throw new Error("Failed to get recommendations");
+      const data = await res.json();
+      setDisplaySongs(data.songs);
+      setStep("result");
 
-    // シャッフル処理を追加
-    songList = shuffleArray(songList);
-
-    // 表示済みでない曲を優先して抽出
-    const newSongs = songList.filter(song => !shownSongKeys.includes(getSongKey(song)));
-    let displaySongs: Song[] = [];
-    if (newSongs.length > 0) {
-      displaySongs = newSongs.slice(0, 5); // 例: 最大5曲表示
-    } else {
-      // すべて履歴に含まれている場合はリセットして再度シャッフル
-      displaySongs = shuffleArray(songList).slice(0, 5);
-      setShownSongKeys([]); // 履歴リセット
-    }
-
-    // Spotify APIで画像URLを取得して上書き
-    const updatedSongs: Song[] = [];
-    for (const song of displaySongs) {
-      try {
-        const res = await fetch("/api/search-songs", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keyword: `${song.title} ${song.artist}` }),
-        });
-        const data = await res.json();
-        let matchedTrack: SpotifyTrack | null = null;
-        if (data.tracks && data.tracks.length > 0) {
-          matchedTrack = data.tracks.find(
-            (track: SpotifyTrack) =>
-              normalize(track.title) === normalize(song.title) &&
-              normalize(track.artist) === normalize(song.artist)
-          );
-          if (!matchedTrack) {
-            matchedTrack = data.tracks.find(
-              (track: SpotifyTrack) =>
-                normalize(track.title) === normalize(song.title) &&
-                normalize(track.artist).includes(normalize(song.artist))
-            );
-          }
-          if (!matchedTrack) matchedTrack = data.tracks[0];
-          updatedSongs.push({
-            ...song,
-            image: matchedTrack?.image || song.image,
-            preview_url: matchedTrack?.preview_url || undefined,
-            spotify_url: matchedTrack?.spotify_url,
-            id: matchedTrack?.id ? parseInt(matchedTrack.id) : undefined,
+      // 履歴を保存
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        for (const song of data.songs) {
+          await fetch("/api/history", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: user.id,
+              songTitle: song.title,
+              songArtist: song.artist,
+              songImageUrl: song.image,
+              emotion: userEmotion,
+              spotifyUrl: song.spotify_url,
+            }),
           });
-        } else {
-          updatedSongs.push(song);
         }
-      } catch {
-        updatedSongs.push(song);
       }
+    } catch (error) {
+      console.error("Error:", error);
+      setError("曲の推薦に失敗しました。もう一度お試しください。");
+      setStep("input");
     }
-    // 履歴を更新
-    setShownSongKeys(prev => [...prev, ...updatedSongs.map(getSongKey)]);
-    setSongs(updatedSongs);
-    setSelectedSong(null);
   };
 
   const handleSongSelect = async (song: Song) => {
@@ -141,6 +110,25 @@ export default function Create() {
     } catch {}
     setSelectedSong({ ...song, preview_url, spotify_url, id: song.id });
     setStep("create");
+
+    // --- 履歴を保存 ---
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await fetch("/api/history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: user.id,
+            emotion,
+            songTitle: song.title,
+            songArtist: song.artist,
+            songImageUrl: song.image,
+            spotifyUrl: song.spotify_url || spotify_url,
+          }),
+        });
+      }
+    } catch (e) { console.error("履歴保存エラー", e); }
   };
 
   const handleRetry = async () => {
@@ -172,6 +160,23 @@ export default function Create() {
         return selectedSong ? (
           <CardCreator song={{ ...selectedSong, ...(selectedSong.id ? { id: selectedSong.id } : {}) }} emotion={emotion} />
         ) : null;
+      case "loading":
+        return <div>Loading...</div>;
+      case "result":
+        return (
+          <div>
+            {error ? (
+              <div className="text-red-500">{error}</div>
+            ) : (
+              <SongResults
+                songs={displaySongs}
+                onSelect={handleSongSelect}
+                emotion={emotion}
+                onRetry={handleRetry}
+              />
+            )}
+          </div>
+        );
       default:
         return <EmotionInput onSubmit={(result, userEmotion) => handleEmotionSubmit(result, userEmotion)} />;
     }
