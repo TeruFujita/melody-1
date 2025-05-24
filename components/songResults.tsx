@@ -13,7 +13,7 @@ import { Button } from "./ui/button";
 import { HeartIcon, RefreshCwIcon } from "lucide-react";
 
 interface Song {
-  id: number;
+  id?: number;
   title: string;
   artist: string;
   image: string;
@@ -25,12 +25,14 @@ interface SongResultsProps {
   songs: Song[];
   emotion: string;
   onSelect: (song: Song) => void;
+  onRetry: () => void;
 }
 
 export default function SongResults({
   songs,
   emotion,
   onSelect,
+  onRetry,
 }: SongResultsProps) {
   return (
     <Card className="bg-white/90 backdrop-blur-sm shadow-xl border-none">
@@ -45,9 +47,9 @@ export default function SongResults({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {songs.map((song) => (
+          {songs.map((song, idx) => (
             <div
-              key={song.id}
+              key={song.id ?? `${song.title}-${song.artist}-${idx}`}
               className="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow border border-pink-100 cursor-pointer"
               onClick={() => onSelect(song)}
             >
@@ -117,6 +119,7 @@ export default function SongResults({
         <Button
           variant="outline"
           className="border-pink-300 text-pink-700 hover:bg-pink-50"
+          onClick={onRetry}
         >
           <RefreshCwIcon className="h-4 w-4 mr-2" />
           他の曲を探す
