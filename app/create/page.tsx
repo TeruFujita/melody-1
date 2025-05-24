@@ -28,12 +28,27 @@ function normalize(str: string): string {
     .normalize('NFKC'); // 全角半角正規化
 }
 
+// 配列シャッフル関数
+function shuffleArray<T>(array: T[]): T[] {
+  return array
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+}
+
 export default function Create() {
   const [step, setStep] = useState<Step>("input");
   const [emotion, setEmotion] = useState<string>("");
   type Song = { title: string; artist: string; image: string; preview_url?: string; spotify_url?: string; id?: number };
   const [songs, setSongs] = useState<Song[]>([]);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
+  // 表示済み曲のキー履歴を管理
+  const [shownSongKeys, setShownSongKeys] = useState<string[]>([]);
+
+  // 曲の一意キーを生成
+  function getSongKey(song: Song) {
+    return `${song.title}-${song.artist}`;
+  }
 
   const handleEmotionSubmit = async (analyzeResult: string, userEmotion: string) => {
     setEmotion(userEmotion);
@@ -48,9 +63,23 @@ export default function Create() {
       songList = extractSongsAsJson(analyzeResult) as Song[];
     }
 
+    // シャッフル処理を追加
+    songList = shuffleArray(songList);
+
+    // 表示済みでない曲を優先して抽出
+    const newSongs = songList.filter(song => !shownSongKeys.includes(getSongKey(song)));
+    let displaySongs: Song[] = [];
+    if (newSongs.length > 0) {
+      displaySongs = newSongs.slice(0, 5); // 例: 最大5曲表示
+    } else {
+      // すべて履歴に含まれている場合はリセットして再度シャッフル
+      displaySongs = shuffleArray(songList).slice(0, 5);
+      setShownSongKeys([]); // 履歴リセット
+    }
+
     // Spotify APIで画像URLを取得して上書き
     const updatedSongs: Song[] = [];
-    for (const song of songList) {
+    for (const song of displaySongs) {
       try {
         const res = await fetch("/api/search-songs", {
           method: "POST",
@@ -60,13 +89,11 @@ export default function Create() {
         const data = await res.json();
         let matchedTrack: SpotifyTrack | null = null;
         if (data.tracks && data.tracks.length > 0) {
-          // 正規化して完全一致する曲を探す（曲名・アーティスト名ともに）
           matchedTrack = data.tracks.find(
             (track: SpotifyTrack) =>
               normalize(track.title) === normalize(song.title) &&
               normalize(track.artist) === normalize(song.artist)
           );
-          // 完全一致がなければ部分一致（アーティスト名含む）
           if (!matchedTrack) {
             matchedTrack = data.tracks.find(
               (track: SpotifyTrack) =>
@@ -74,7 +101,6 @@ export default function Create() {
                 normalize(track.artist).includes(normalize(song.artist))
             );
           }
-          // それもなければ最初の候補
           if (!matchedTrack) matchedTrack = data.tracks[0];
           updatedSongs.push({
             ...song,
@@ -90,6 +116,8 @@ export default function Create() {
         updatedSongs.push(song);
       }
     }
+    // 履歴を更新
+    setShownSongKeys(prev => [...prev, ...updatedSongs.map(getSongKey)]);
     setSongs(updatedSongs);
     setSelectedSong(null);
   };

@@ -3,17 +3,17 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface LikeContextType {
-  likedSongs: Set<number>;
-  toggleLike: (songId: number) => void;
-  isLiked: (songId: number) => boolean;
+  likedSongs: Set<string>;
+  toggleLike: (songId: string) => void;
+  isLiked: (songId: string) => boolean;
 }
 
 const LikeContext = createContext<LikeContextType | undefined>(undefined);
 
 export function LikeProvider({ children }: { children: ReactNode }) {
-  const [likedSongs, setLikedSongs] = useState<Set<number>>(new Set());
+  const [likedSongs, setLikedSongs] = useState<Set<string>>(new Set());
 
-  const toggleLike = (songId: number) => {
+  const toggleLike = (songId: string) => {
     setLikedSongs((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(songId)) {
@@ -25,7 +25,7 @@ export function LikeProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const isLiked = (songId: number) => {
+  const isLiked = (songId: string) => {
     return likedSongs.has(songId);
   };
 
