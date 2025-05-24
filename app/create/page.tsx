@@ -9,6 +9,15 @@ import { extractSongsAsJson } from "@/lib/utils";
 
 type Step = "input" | "results" | "create";
 
+type SpotifyTrack = {
+  id: string;
+  title: string;
+  artist: string;
+  image: string;
+  preview_url: string | null;
+  spotify_url: string;
+};
+
 // 曲名・アーティスト名の正規化関数
 function normalize(str: string): string {
   return str
@@ -56,18 +65,18 @@ export default function Create() {
           body: JSON.stringify({ keyword: `${song.title} ${song.artist}` }),
         });
         const data = await res.json();
-        let matchedTrack: any = null;
+        let matchedTrack: SpotifyTrack | null = null;
         if (data.tracks && data.tracks.length > 0) {
           // 正規化して完全一致する曲を探す（曲名・アーティスト名ともに）
           matchedTrack = data.tracks.find(
-            (track: any) =>
+            (track: SpotifyTrack) =>
               normalize(track.title) === normalize(song.title) &&
               normalize(track.artist) === normalize(song.artist)
           );
           // 完全一致がなければ部分一致（アーティスト名含む）
           if (!matchedTrack) {
             matchedTrack = data.tracks.find(
-              (track: any) =>
+              (track: SpotifyTrack) =>
                 normalize(track.title) === normalize(song.title) &&
                 normalize(track.artist).includes(normalize(song.artist))
             );
@@ -76,10 +85,10 @@ export default function Create() {
           if (!matchedTrack) matchedTrack = data.tracks[0];
           updatedSongs.push({
             ...song,
-            image: matchedTrack.image || song.image,
-            preview_url: matchedTrack.preview_url,
-            spotify_url: matchedTrack.spotify_url,
-            id: matchedTrack.id,
+            image: matchedTrack?.image || song.image,
+            preview_url: matchedTrack?.preview_url || undefined,
+            spotify_url: matchedTrack?.spotify_url,
+            id: matchedTrack?.id ? parseInt(matchedTrack.id) : undefined,
           });
         } else {
           updatedSongs.push(song);

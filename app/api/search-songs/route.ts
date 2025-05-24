@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import { extractSongsAsJson } from "@/lib/utils";
 
 type SpotifyTrack = {
   id: string;
