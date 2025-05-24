@@ -12,7 +12,7 @@ import { Textarea } from "./ui/textarea";
 import { useState } from "react";
 
 interface EmotionInoutProps {
-  onSubmit: (analyzeResult: string) => void;
+  onSubmit: (analyzeResult: string, userEmotion: string) => void;
 }
 
 export default function EmotionInput({ onSubmit }: EmotionInoutProps) {
@@ -52,7 +52,7 @@ export default function EmotionInput({ onSubmit }: EmotionInoutProps) {
 
       // ここで、AIからのレスポンスを処理
       console.log("Generated keywords:", data.keywords);
-      onSubmit(data.keywords);
+      onSubmit(data.keywords, emotion);
     } catch (err) {
       const errorMessage =
         err instanceof Error

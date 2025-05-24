@@ -16,10 +16,12 @@ import { MusicCard } from "./musicCard";
 
 interface CardCreatorProps {
   song: {
-    id: number;
+    id?: number;
     title: string;
     artist: string;
     image: string;
+    preview_url?: string;
+    spotify_url?: string;
   };
   emotion: string;
 }
@@ -65,16 +67,16 @@ export default function CardCreator({ song, emotion }: CardCreatorProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+          <div className="flex flex-col justify-end h-full min-h-[350px]">
+            <div className="mb-8">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 メッセージ
               </label>
               <div className="relative">
                 <Textarea
                   placeholder="この曲に込めた思いを書いてください..."
-                  className="min-h-[120px] border-pink-200 focus:border-pink-400 focus:ring-pink-400"
+                  className="min-h-[250px] border-pink-200 focus:border-pink-400 focus:ring-pink-400"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                 />
@@ -99,7 +101,6 @@ export default function CardCreator({ song, emotion }: CardCreatorProps) {
                 </Button>
               </div>
             </div>
-
             {!isCreated ? (
               <Button
                 onClick={createCard}
@@ -152,14 +153,12 @@ export default function CardCreator({ song, emotion }: CardCreatorProps) {
               </div>
             )}
           </div>
-
           <div>
             <h3 className="text-lg font-medium text-gray-700 mb-4">
               プレビュー
             </h3>
             <MusicCard
               song={song}
-              message={message || "メッセージを入力してください..."}
             />
           </div>
         </div>

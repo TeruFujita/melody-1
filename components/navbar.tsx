@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { MusicIcon } from "lucide-react";
+import { MusicIcon, HeartIcon } from "lucide-react";
 
 export function Navbar() {
   return (
@@ -25,6 +25,13 @@ export function Navbar() {
             className="text-gray-700 hover:text-pink-500 transition-colors"
           >
             履歴
+          </Link>
+          <Link
+            href="/likes"
+            className="text-gray-700 hover:text-pink-500 transition-colors flex items-center gap-1"
+          >
+            <HeartIcon className="h-4 w-4" />
+            いいね
           </Link>
         </nav>
 
