@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI, Part } from '@google/generative-ai';
 
-// OpenAIクライアントの初期化
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Gemini APIクライアントの初期化
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 // 定数
 const SYSTEM_PROMPT = "あなたは日本の音楽キュレーターです。ユーザーの感情や状況を細かく分析し、その気持ちに最も寄り添う日本の楽曲を提案してください。\
@@ -13,8 +11,6 @@ const SYSTEM_PROMPT = "あなたは日本の音楽キュレーターです。ユ
 - 感情の強さやニュアンスも考慮\
 - 曲名・アーティスト名・ジャンル・リリース年・なぜこの曲が合うのかの理由を日本語で\
 - 3曲程度リスト形式で";
-const USER_PROMPT = (text: string) => 
-  `ユーザーの感情・状況: ${text}`;
 
 export async function POST(request: Request) {
     try {
@@ -23,27 +19,42 @@ export async function POST(request: Request) {
       console.log('Received text:', text);
   
       // 環境変数のチェック
-      if (!process.env.OPENAI_API_KEY) {
-        console.error('OPENAI_API_KEY is not defined');
+      if (!process.env.GEMINI_API_KEY) {
+        console.error('GEMINI_API_KEY is not defined');
         return NextResponse.json(
           { error: 'APIキーが設定されていません' },
           { status: 500 }
         );
       }
   
-      // OpenAI APIの呼び出し
-      const response = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: USER_PROMPT(text) }
+      // Gemini APIの呼び出し
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      
+      // チャットセッションの開始
+      const chat = model.startChat({
+        history: [
+          {
+            role: "user",
+            parts: [{ text: "あなたは日本の音楽キュレーターとして、ユーザーの感情に寄り添った曲を提案してください。" }],
+          },
+          {
+            role: "model",
+            parts: [{ text: "はい、承知しました。ユーザーの感情や状況を理解し、それに合った日本の楽曲を提案させていただきます。" }],
+          },
         ],
-        temperature: 0.7,
-        max_tokens: 100,
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+        },
       });
-  
-      // レスポンスの処理
-      const keywords = response.choices[0]?.message?.content || '';
+
+      // ユーザーの感情を分析
+      const result = await chat.sendMessage([{ text }]);
+      const response = await result.response;
+      const keywords = response.text();
+      
       console.log('Generated keywords:', keywords);
   
       return NextResponse.json({ keywords });
@@ -59,4 +70,4 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-  }
+}
