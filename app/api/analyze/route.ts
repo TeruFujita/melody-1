@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI, Part } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Gemini APIクライアントの初期化
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -11,6 +11,37 @@ const SYSTEM_PROMPT = "あなたは日本の音楽キュレーターです。ユ
 - 感情の強さやニュアンスも考慮\
 - 曲名・アーティスト名・ジャンル・リリース年・なぜこの曲が合うのかの理由を日本語で\
 - 3曲程度リスト形式で";
+
+// リトライ用の待機関数
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// リトライロジック
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 1000
+): Promise<T> {
+  let retries = 0;
+  let delay = initialDelay;
+
+  while (true) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (retries >= maxRetries) throw error;
+      
+      // 429エラー（Too Many Requests）の場合のみリトライ
+      if (error instanceof Error && error.message.includes('429')) {
+        console.log(`Retrying after ${delay}ms... (Attempt ${retries + 1}/${maxRetries})`);
+        await wait(delay);
+        retries++;
+        delay *= 2; // 指数バックオフ
+      } else {
+        throw error;
+      }
+    }
+  }
+}
 
 export async function POST(request: Request) {
     try {
@@ -27,31 +58,14 @@ export async function POST(request: Request) {
         );
       }
   
-      // Gemini APIの呼び出し
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      
-      // チャットセッションの開始
-      const chat = model.startChat({
-        history: [
-          {
-            role: "user",
-            parts: [{ text: "あなたは日本の音楽キュレーターとして、ユーザーの感情に寄り添った曲を提案してください。" }],
-          },
-          {
-            role: "model",
-            parts: [{ text: "はい、承知しました。ユーザーの感情や状況を理解し、それに合った日本の楽曲を提案させていただきます。" }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 1024,
-        },
+      // Gemini APIの呼び出し（リトライロジック付き）
+      const result = await retryWithBackoff(async () => {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+        const prompt = `${SYSTEM_PROMPT}\n\nユーザーの感情・状況: ${text}`;
+        const result = await model.generateContent(prompt);
+        return result;
       });
-
-      // ユーザーの感情を分析
-      const result = await chat.sendMessage([{ text }]);
+      
       const response = await result.response;
       const keywords = response.text();
       
@@ -61,11 +75,23 @@ export async function POST(request: Request) {
     } catch (error) {
       // エラーハンドリングの改善
       console.error('Server error:', error);
-      const errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました';
+      let errorDetails = '不明なエラーが発生しました';
+      
+      if (error instanceof Error) {
+        errorDetails = error.message;
+        // エラーオブジェクトの詳細情報をログに出力
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      }
+      
       return NextResponse.json(
         { 
           error: '感情分析に失敗しました',
-          details: errorMessage 
+          details: errorDetails,
+          timestamp: new Date().toISOString()
         },
         { status: 500 }
       );
