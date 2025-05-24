@@ -14,17 +14,9 @@ export default function Create() {
   type Song = { id: number; title: string; artist: string; image: string };
   const [song, setSong] = useState<Song | null>(null);
 
-  //仮の音楽データ
-  // const musicData = [
-  //   { id: 1, title: "Song A", artist: "Artist A", image: "/placeholder1.jpg" },
-  //   { id: 2, title: "Song B", artist: "Artist B", image: "/placeholder2.jpg" },
-  //   { id: 3, title: "Song C", artist: "Artist C", image: "/placeholder3.jpg" },
-  // ];
-
   const handleEmotionSubmit = async (analyzeResult: string) => {
     setEmotion(emotion);
     setStep("results");
-    // ここでAIとSpotify APIを呼び出して音楽データを取得する
 
     //spotify APIを呼び出して音楽データを取得する
     const res = await fetch("api/search-songs", {
