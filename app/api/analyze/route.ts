@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// 動的インポートを使用
+const { GoogleGenerativeAI } = await import('@google/generative-ai');
 
 // Gemini APIクライアントの初期化
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -13,7 +15,10 @@ const SYSTEM_PROMPT = `あなたは日本の音楽キュレーターです。ユ
 - 画像URLとSpotifyリンクは公式なもの、または信頼できる音楽配信サービス（Spotify, Apple Music, Amazon Music等）のものを優先してください
 - 必ずSpotifyで検索可能な有名曲・正確な表記を使ってください
 - ユーザーの入力内容にできるだけ忠実に、感情や状況にピッタリ合う曲を選んでください
-- 日本語で出力してください`;
+- 日本語で出力してください
+- 同じ感情や状況でも、返す曲リストは毎回できるだけ違う組み合わせになるようにランダムに選んでください
+- 有名曲だけでなく、隠れた名曲やジャンル違いも時々混ぜてください
+- 同じ曲が連続しないようにしてください`;
 
 // リトライ用の待機関数
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -61,14 +66,10 @@ export async function POST(request: Request) {
         );
       }
   
-      // Gemini APIの呼び出し（リトライロジック付き）
-      const result = await retryWithBackoff(async () => {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-        const prompt = `${SYSTEM_PROMPT}\n\nユーザーの感情・状況: ${text}`;
-        const result = await model.generateContent(prompt);
-        return result;
-      });
-      
+      // Gemini APIの呼び出し
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+      const prompt = `${SYSTEM_PROMPT}\n\nユーザーの感情・状況: ${text}`;
+      const result = await model.generateContent(prompt);
       const response = await result.response;
       const keywords = response.text();
       
