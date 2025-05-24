@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// 動的インポートを使用
+const { GoogleGenerativeAI } = await import('@google/generative-ai');
 
 // Gemini APIクライアントの初期化
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -61,14 +63,10 @@ export async function POST(request: Request) {
         );
       }
   
-      // Gemini APIの呼び出し（リトライロジック付き）
-      const result = await retryWithBackoff(async () => {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-        const prompt = `${SYSTEM_PROMPT}\n\nユーザーの感情・状況: ${text}`;
-        const result = await model.generateContent(prompt);
-        return result;
-      });
-      
+      // Gemini APIの呼び出し
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+      const prompt = `${SYSTEM_PROMPT}\n\nユーザーの感情・状況: ${text}`;
+      const result = await model.generateContent(prompt);
       const response = await result.response;
       const keywords = response.text();
       
