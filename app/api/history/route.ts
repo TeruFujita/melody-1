@@ -13,3 +13,13 @@ export async function GET(req: Request) {
   });
   return NextResponse.json(history);
 }
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const history = await prisma.recommendationHistory.create({ data: body });
+    return NextResponse.json(history);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message, stack: error.stack }, { status: 500 });
+  }
+}

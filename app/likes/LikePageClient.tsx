@@ -2,7 +2,7 @@
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart } from "lucide-react";
+import { Heart, ExternalLink } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -13,6 +13,7 @@ interface LikeItem {
   songArtist: string;
   songImageUrl: string;
   createdAt: string;
+  spotifyUrl?: string;
 }
 
 export default function LikesPageClient() {
@@ -67,7 +68,12 @@ export default function LikesPageClient() {
                     {likeItems.map((item) => (
                       <div
                         key={item.id}
-                        className="relative group border rounded-lg overflow-hidden"
+                        className="relative group border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() => {
+                          if (item.spotifyUrl) {
+                            window.open(item.spotifyUrl, '_blank');
+                          }
+                        }}
                       >
                         {item.songImageUrl && (
                           <div className="aspect-square relative">
@@ -88,13 +94,28 @@ export default function LikesPageClient() {
                             {new Date(item.createdAt).toLocaleDateString()}
                           </p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Heart className="h-5 w-5 text-red-500" />
-                        </Button>
+                        <div className="absolute top-2 right-2 flex gap-2">
+                          {item.spotifyUrl && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(item.spotifyUrl, '_blank');
+                              }}
+                            >
+                              <ExternalLink className="h-5 w-5 text-green-500" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Heart className="h-5 w-5 text-red-500" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
