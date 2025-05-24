@@ -56,6 +56,18 @@ export default function CardCreator({ song, emotion }: CardCreatorProps) {
     alert("メッセージがクリップボードにコピーされました！");
   };
 
+  const shareOnLine = () => {
+    // LINEはURLのみシェア可能
+    const lineUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}`;
+    window.open(lineUrl, '_blank');
+  };
+
+  const shareOnTwitter = () => {
+    // TwitterはURL+メッセージをシェア可能
+    const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(message)}`;
+    window.open(twitterUrl, '_blank');
+  };
+
   return (
     <Card className="bg-white/90 backdrop-blur-sm shadow-xl border-none">
       <CardHeader className="text-center">
@@ -138,6 +150,7 @@ export default function CardCreator({ song, emotion }: CardCreatorProps) {
                   <Button
                     variant="outline"
                     className="flex-1 border-pink-200 text-pink-700 hover:bg-pink-50"
+                    onClick={shareOnLine}
                   >
                     <ShareIcon className="h-4 w-4 mr-2" />
                     LINEで送る
@@ -145,6 +158,7 @@ export default function CardCreator({ song, emotion }: CardCreatorProps) {
                   <Button
                     variant="outline"
                     className="flex-1 border-pink-200 text-pink-700 hover:bg-pink-50"
+                    onClick={shareOnTwitter}
                   >
                     <ShareIcon className="h-4 w-4 mr-2" />
                     Twitterで共有
