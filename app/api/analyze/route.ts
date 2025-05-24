@@ -5,12 +5,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 // 定数
-const SYSTEM_PROMPT = "あなたは日本の音楽キュレーターです。ユーザーの感情や状況を細かく分析し、その気持ちに最も寄り添う日本の楽曲を提案してください。\
-- 2000年以降の曲を優先\
-- 歌詞の内容やメッセージが感情に合っているか吟味\
-- 感情の強さやニュアンスも考慮\
-- 曲名・アーティスト名・ジャンル・リリース年・なぜこの曲が合うのかの理由を日本語で\
-- 3曲程度リスト形式で";
+const SYSTEM_PROMPT = `あなたは日本の音楽キュレーターです。ユーザーの感情や状況を分析し、その気持ちに最も寄り添う日本の楽曲を提案してください。
+- 2000年以降の曲を優先
+- 曲名、アーティスト名、曲の画像URL（ジャケット画像など）、Spotifyの曲リンク（spotify_url）だけを日本語のJSON配列で最低4曲以上返してください
+- 例: [{"title": "曲名", "artist": "アーティスト名", "image": "画像URL", "spotify_url": "Spotifyの曲リンク"}, ...]
+- 理由やジャンル、リリース年などは一切含めないでください
+- 画像URLとSpotifyリンクは公式なもの、または信頼できる音楽配信サービス（Spotify, Apple Music, Amazon Music等）のものを優先してください
+- 日本語で出力してください`;
 
 // リトライ用の待機関数
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

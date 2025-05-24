@@ -5,14 +5,26 @@ import EmotionInput from "../../components/emotionInput";
 import SongResults from "../../components/songResults";
 import CardCreator from "../../components/cardCreator";
 import { Navbar } from "@/components/navbar";
+import { extractSongsAsJson } from "@/lib/utils";
 
 type Step = "input" | "results" | "create";
 
+// 曲名・アーティスト名の正規化関数
+function normalize(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/[\s　]+/g, "") // 全角・半角スペース除去
+    .replace(/[‐‑‒–—―ー−]/g, '-') // ダッシュ類を統一
+    .replace(/[！!]/g, '!') // 記号例
+    .normalize('NFKC'); // 全角半角正規化
+}
+
 export default function Create() {
   const [step, setStep] = useState<Step>("input");
-  const [emotion, setEmotion] = useState<string | null>(null);
-  type Song = { id: number; title: string; artist: string; image: string };
-  const [song, setSong] = useState<Song | null>(null);
+  const [emotion, setEmotion] = useState<string>("");
+  type Song = { title: string; artist: string; image: string };
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [selectedSong, setSelectedSong] = useState<Song | null>(null);
 
   //仮の音楽データ
   // const musicData = [
@@ -21,43 +33,109 @@ export default function Create() {
   //   { id: 3, title: "Song C", artist: "Artist C", image: "/placeholder3.jpg" },
   // ];
 
-  const handleEmotionSubmit = async (analyzeResult: string) => {
-    setEmotion(emotion);
+  const handleEmotionSubmit = async (analyzeResult: string, userEmotion: string) => {
+    setEmotion(userEmotion);
     setStep("results");
-    // ここでAIとSpotify APIを呼び出して音楽データを取得する
+    let songList: Song[] = [];
+    try {
+      songList = JSON.parse(analyzeResult);
+      if (!Array.isArray(songList)) {
+        songList = extractSongsAsJson(analyzeResult) as Song[];
+      }
+    } catch {
+      songList = extractSongsAsJson(analyzeResult) as Song[];
+    }
 
-    //spotify APIを呼び出して音楽データを取得する
-    const res = await fetch("api/search-songs", {
-      method: "POST",
-      body: JSON.stringify({ keyword: analyzeResult }),
-    });
-
-    const data = await res.json();
-    setSong(data.tracks);
+    // Spotify APIで画像URLを取得して上書き
+    const updatedSongs: Song[] = [];
+    for (const song of songList) {
+      try {
+        const res = await fetch("/api/search-songs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keyword: `${song.title} ${song.artist}` }),
+        });
+        const data = await res.json();
+        let matchedTrack = null;
+        if (data.tracks && data.tracks.length > 0) {
+          // 正規化して完全一致する曲を探す
+          matchedTrack = data.tracks.find(
+            (track) =>
+              normalize(track.title) === normalize(song.title) &&
+              normalize(track.artist).includes(normalize(song.artist))
+          );
+          if (!matchedTrack) matchedTrack = data.tracks[0];
+          updatedSongs.push({
+            ...song,
+            image: matchedTrack.image || song.image,
+            preview_url: matchedTrack.preview_url,
+            spotify_url: matchedTrack.spotify_url,
+          });
+        } else {
+          updatedSongs.push(song);
+        }
+      } catch {
+        updatedSongs.push(song);
+      }
+    }
+    setSongs(updatedSongs);
+    setSelectedSong(null);
   };
-  const handleSongSelect = (song: Song) => {
-    setSong(song);
+
+  const handleSongSelect = async (song: Song) => {
+    // Spotify APIでプレビューURLとSpotifyリンクを取得
+    let preview_url = undefined;
+    let spotify_url = undefined;
+    try {
+      const res = await fetch("/api/search-songs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword: `${song.title} ${song.artist}` }),
+      });
+      const data = await res.json();
+      if (data.tracks && data.tracks.length > 0) {
+        console.log('Spotify track data:', data.tracks[0]);
+        preview_url = data.tracks[0].preview_url;
+        spotify_url = data.tracks[0].spotify_url;
+      }
+    } catch {}
+    setSelectedSong({ ...song, preview_url, spotify_url });
     setStep("create");
+  };
+
+  const handleRetry = async () => {
+    if (!emotion) return;
+    setStep("results");
+    const response = await fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: emotion }),
+    });
+    const data = await response.json();
+    await handleEmotionSubmit(data.keywords, emotion);
   };
 
   const renderStep = () => {
     switch (step) {
       case "input":
-        return <EmotionInput onSubmit={handleEmotionSubmit} />;
+        return <EmotionInput onSubmit={(result, userEmotion) => handleEmotionSubmit(result, userEmotion)} />;
       case "results":
         return (
-          <SongResults
-            songs={song ? [song] : []}
-            onSelect={handleSongSelect}
-            emotion={emotion ?? ""}
-          />
+          <>
+            <SongResults
+              songs={songs}
+              onSelect={handleSongSelect}
+              emotion={emotion}
+              onRetry={handleRetry}
+            />
+          </>
         );
       case "create":
-        return song ? (
-          <CardCreator song={song} emotion={emotion ?? ""} />
+        return selectedSong ? (
+          <CardCreator song={selectedSong} emotion={emotion} />
         ) : null;
       default:
-        return <EmotionInput onSubmit={handleEmotionSubmit} />;
+        return <EmotionInput onSubmit={(result, userEmotion) => handleEmotionSubmit(result, userEmotion)} />;
     }
   };
 
@@ -69,11 +147,12 @@ export default function Create() {
           <div className="flex justify-center mb-8">
             <div className="flex items-center">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer ${
                   step === "input"
                     ? "bg-pink-500 text-white"
                     : "bg-pink-200 text-pink-700"
                 }`}
+                onClick={() => setStep("input")}
               >
                 1
               </div>
@@ -83,13 +162,12 @@ export default function Create() {
                 }`}
               ></div>
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  step === "results"
-                    ? "bg-pink-500 text-white"
-                    : step === "create"
+                className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer ${
+                  step === "results" || step === "create"
                     ? "bg-pink-500 text-white"
                     : "bg-pink-200 text-pink-700"
                 }`}
+                onClick={() => setStep("results")}
               >
                 2
               </div>
@@ -99,11 +177,12 @@ export default function Create() {
                 }`}
               ></div>
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer ${
                   step === "create"
                     ? "bg-pink-500 text-white"
                     : "bg-pink-200 text-pink-700"
                 }`}
+                onClick={() => setStep("create")}
               >
                 3
               </div>

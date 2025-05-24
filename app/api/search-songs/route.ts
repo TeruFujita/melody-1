@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { extractSongsAsJson } from "@/lib/utils";
 
 type SpotifyTrack = {
   id: string;
@@ -32,7 +33,25 @@ export async function POST(req: NextRequest) {
     }
   );
 
+  // レスポンスのステータスと内容を確認
+  if (!searchRes.ok) {
+    const errorText = await searchRes.text();
+    console.error('Spotify API error:', searchRes.status, errorText);
+    return Response.json(
+      { error: 'Spotify APIリクエストに失敗しました', details: errorText },
+      { status: 500 }
+    );
+  }
+
   const searchData = await searchRes.json();
+
+  if (!searchData.tracks || !Array.isArray(searchData.tracks.items)) {
+    console.error('Spotify APIレスポンス不正:', searchData);
+    return Response.json(
+      { error: 'Spotify APIから曲情報が取得できませんでした', details: searchData },
+      { status: 500 }
+    );
+  }
 
   const tracks = (searchData.tracks.items as SpotifyTrack[]).map((item) => ({
     id: item.id,
@@ -42,8 +61,6 @@ export async function POST(req: NextRequest) {
     preview_url: item.preview_url,
     spotify_url: item.external_urls.spotify,
   }));
-
-  console.log(searchData);
 
   return Response.json({ tracks });
 }
