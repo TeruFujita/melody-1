@@ -50,9 +50,9 @@ export default function SongResults({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {songs.map((song, idx) => (
+          {songs.map((song) => (
             <div
-              key={song.id ?? `${song.title}-${song.artist}-${idx}`}
+              key={`${song.id}-${song.title}-${song.artist}`}
               className="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow border border-pink-100 cursor-pointer"
               onClick={() => onSelect(song)}
             >
