@@ -16,7 +16,7 @@ datasource db {
 
 model Recommendation {
   id            String   @id @default(uuid())
-  userId        String
+  user_id       String
   emotion       String
   message       String?
   songTitle     String
@@ -24,22 +24,26 @@ model Recommendation {
   songImageUrl  String
   spotifyUrl    String
   createdAt     DateTime @default(now())
+
+  @@index([user_id])
 }
 
 model RecommendationHistory {
   id            String   @id @default(uuid())
-  userId        String
+  user_id       String
   emotion       String
   songTitle     String
   songArtist    String
   songImageUrl  String
   spotifyUrl    String
   createdAt     DateTime @default(now())
+
+  @@index([user_id])
 }
 
 model Favorite {
   id            String   @id @default(uuid())
-  userId        String
+  user_id       String
   sourceType    String   // "ai" or "gift"
   sourceId      String
   songTitle     String
@@ -47,4 +51,6 @@ model Favorite {
   songImageUrl  String
   spotifyUrl    String
   createdAt     DateTime @default(now())
+
+  @@index([user_id])
 }

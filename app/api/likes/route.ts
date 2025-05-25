@@ -3,21 +3,25 @@ import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const userId = searchParams.get("userId");
-  if (!userId)
-    return NextResponse.json({ error: "userId is required" }, { status: 400 });
+  const user_id = searchParams.get("user_id");
+  if (!user_id)
+    return NextResponse.json({ error: "user_id is required" }, { status: 400 });
 
   const likes = await prisma.favorite.findMany({
-    where: { userId },
+    where: { user_id },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(likes);
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const favorite = await prisma.favorite.create({ data: body });
-  return NextResponse.json(favorite);
+  try {
+    const body = await req.json();
+    const favorite = await prisma.favorite.create({ data: body });
+    return NextResponse.json(favorite);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message, stack: error.stack }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: Request) {
