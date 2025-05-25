@@ -128,8 +128,6 @@ export default function SongResults({
                       height={96}
                       src={song.image || "/placeholder.svg"}
                       alt={song.title}
-                      width={50}
-                      height={50}
                       className="w-full h-full object-cover rounded-lg"
                     />
                   </div>
@@ -155,7 +153,7 @@ export default function SongResults({
                             title: song.title,
                             artist: song.artist,
                             image: song.image,
-                            spotify_url: song.spotify_url
+                            spotify_url: song.spotify_url,
                           });
                         }}
                       >
