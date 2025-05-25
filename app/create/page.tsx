@@ -165,7 +165,14 @@ export default function Create() {
           <CardCreator song={{ ...selectedSong, ...(selectedSong.id ? { id: selectedSong.id } : {}) }} emotion={emotion} />
         ) : null;
       case "loading":
-        return <div>Loading...</div>;
+        return (
+          <div className="min-h-screen bg-gradient-to-b from-pink-50 to-purple-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"/>
+              <p className="text-purple-600 text-lg font-medium">曲を探しています...</p>
+            </div>
+          </div>
+        );
       case "result":
         return (
           <div>
