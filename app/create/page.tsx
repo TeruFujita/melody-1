@@ -168,11 +168,33 @@ export default function Create() {
     } catch {}
     setSelectedSong({ ...song, preview_url, spotify_url, id: song.id });
     setStep("create");
+
+    // --- 履歴を保存 ---
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      // emotionが空の場合は"未入力"で補完
+      let saveEmotion = emotion;
+      if (!saveEmotion) saveEmotion = "未入力";
+      if (user) {
+        await fetch("/api/history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: user.id,
+            emotion: saveEmotion,
+            songTitle: song.title,
+            songArtist: song.artist,
+            songImageUrl: song.image,
+            spotifyUrl: song.spotify_url || spotify_url,
+          }),
+        });
+      }
+    } catch (e) { console.error("履歴保存エラー", e); }
   };
 
   const handleRetry = async () => {
     if (!emotion) return;
-    setStep("results");
+    setStep("loading");
     const response = await fetch("/api/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -211,7 +233,16 @@ export default function Create() {
             emotion={emotion}
           />
         ) : null;
-      default:
+      case "loading":
+        return (
+          <div className="min-h-screen bg-gradient-to-b from-pink-50 to-purple-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"/>
+              <p className="text-purple-600 text-lg font-medium">曲を探しています...</p>
+            </div>
+          </div>
+        );
+      case "result":
         return (
           <EmotionInput
             onSubmit={(result, userEmotion) =>
@@ -253,7 +284,10 @@ export default function Create() {
                   emotion ? "cursor-pointer" : "cursor-not-allowed opacity-50"
                 }`}
                 onClick={() => {
-                  if (emotion) setStep("results");
+                  if (emotion) {
+                    if (displaySongs.length > 0) setSongs(displaySongs);
+                    setStep("results");
+                  }
                 }}
               >
                 2
@@ -279,7 +313,21 @@ export default function Create() {
               </div>
             </div>
           </div>
-          {renderStep()}
+          <div className="relative">
+            {step !== "loading" && (
+              <div>
+                {renderStep()}
+              </div>
+            )}
+            {step === "loading" && (
+              <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[9999]">
+                <div className="bg-white rounded-2xl shadow-xl px-10 py-8 flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500 mb-4"/>
+                  <p className="text-purple-600 text-lg font-medium">曲を探しています...</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>

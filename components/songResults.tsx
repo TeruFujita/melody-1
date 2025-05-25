@@ -114,7 +114,7 @@ export default function SongResults({
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {uniqueSongs.map((song) => {
-            const songKey = `${song.id ?? "noid"}-${song.title}-${song.artist}`;
+            const songKey = `${song.title}-${song.artist}`;
             return (
               <div
                 key={songKey}
