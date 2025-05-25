@@ -137,7 +137,7 @@ export default function Create() {
 
   const handleRetry = async () => {
     if (!emotion) return;
-    setStep("results");
+    setStep("loading");
     const response = await fetch("/api/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -249,7 +249,21 @@ export default function Create() {
               </div>
             </div>
           </div>
-          {renderStep()}
+          <div className="relative">
+            {step !== "loading" && (
+              <div>
+                {renderStep()}
+              </div>
+            )}
+            {step === "loading" && (
+              <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[9999]">
+                <div className="bg-white rounded-2xl shadow-xl px-10 py-8 flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500 mb-4"/>
+                  <p className="text-purple-600 text-lg font-medium">曲を探しています...</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
