@@ -16,7 +16,7 @@ import { MusicCard } from "./musicCard";
 
 interface CardCreatorProps {
   song: {
-    id?: number;
+    id?: string;
     title: string;
     artist: string;
     image: string;
@@ -47,7 +47,7 @@ export default function CardCreator({ song, emotion }: CardCreatorProps) {
     // ここでカードを作成してDBに保存する
     setTimeout(() => {
       setIsCreated(true);
-      setShareUrl("https://mood-melody.vercel.app/gift/abc123");
+      setShareUrl(`https://mood-melody.vercel.app/gift/${song.id}`);
     }, 1000);
   };
 
@@ -58,14 +58,18 @@ export default function CardCreator({ song, emotion }: CardCreatorProps) {
 
   const shareOnLine = () => {
     // LINEはURLのみシェア可能
-    const lineUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}`;
-    window.open(lineUrl, '_blank');
+    const lineUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(
+      shareUrl
+    )}`;
+    window.open(lineUrl, "_blank");
   };
 
   const shareOnTwitter = () => {
     // TwitterはURL+メッセージをシェア可能
-    const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(message)}`;
-    window.open(twitterUrl, '_blank');
+    const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(
+      shareUrl
+    )}&text=${encodeURIComponent(message)}`;
+    window.open(twitterUrl, "_blank");
   };
 
   return (
@@ -171,9 +175,7 @@ export default function CardCreator({ song, emotion }: CardCreatorProps) {
             <h3 className="text-lg font-medium text-gray-700 mb-4">
               プレビュー
             </h3>
-            <MusicCard
-              song={song}
-            />
+            <MusicCard song={song} />
           </div>
         </div>
       </CardContent>
