@@ -10,7 +10,6 @@ declare global {
 interface YTPlayer {
   playVideo: () => void;
   stopVideo: () => void;
-  // ほかに使うメソッドあればここに追加
 }
 
 interface YouTubePlayerProps {
