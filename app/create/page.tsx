@@ -206,7 +206,7 @@ export default function Create() {
           <CardCreator
             song={{
               ...selectedSong,
-              ...(selectedSong.id ? { id: selectedSong.id } : {}),
+              id: selectedSong.id ? String(selectedSong.id) : undefined, // ← 型変換
             }}
             emotion={emotion}
           />
