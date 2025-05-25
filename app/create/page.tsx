@@ -54,6 +54,7 @@ export default function Create() {
   }
 
   const handleEmotionSubmit = async (analyzeResult: string, userEmotion: string) => {
+    setEmotion(userEmotion);
     setStep("loading");
     try {
       const res = await fetch("/api/recommend", {
@@ -114,13 +115,16 @@ export default function Create() {
     // --- 履歴を保存 ---
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      // emotionが空の場合は"未入力"で補完
+      let saveEmotion = emotion;
+      if (!saveEmotion) saveEmotion = "未入力";
       if (user) {
         await fetch("/api/history", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             user_id: user.id,
-            emotion,
+            emotion: saveEmotion,
             songTitle: song.title,
             songArtist: song.artist,
             songImageUrl: song.image,
@@ -211,7 +215,10 @@ export default function Create() {
                     : "bg-pink-200 text-pink-700"
                 } ${emotion ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}
                 onClick={() => {
-                  if (emotion) setStep("results");
+                  if (emotion) {
+                    if (displaySongs.length > 0) setSongs(displaySongs);
+                    setStep("results");
+                  }
                 }}
               >
                 2

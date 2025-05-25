@@ -108,13 +108,13 @@ export default function LikesPageClient() {
                               <ExternalLink className="h-5 w-5 text-green-500" />
                             </Button>
                           )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                        <Button
+                          variant="ghost"
+                          size="icon"
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Heart className="h-5 w-5 text-red-500" />
-                          </Button>
+                        >
+                          <Heart className="h-5 w-5 text-red-500" />
+                        </Button>
                         </div>
                       </div>
                     ))}
