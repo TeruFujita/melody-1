@@ -11,6 +11,9 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { SupabaseClient } from "@supabase/supabase-js";
 
+// supabaseクライアントの型を定義
+const supabaseClient: SupabaseClient = supabase;
+
 type Step = "input" | "results" | "create" | "loading" | "result";
 
 type SpotifyTrack = {
@@ -177,7 +180,7 @@ export default function Create() {
 
     // --- 履歴を保存 ---
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) {
         console.warn("ユーザーがログインしていません");
         return;

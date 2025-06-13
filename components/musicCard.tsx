@@ -10,9 +10,10 @@ interface MusicCardProps {
     preview_url?: string;
     spotify_url?: string;
   };
+  message?: string;
 }
 
-export function MusicCard({ song }: MusicCardProps) {
+export function MusicCard({ song, message }: MusicCardProps) {
   return (
     <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-pink-100 to-purple-100">
       <div className="relative h-48 w-full">

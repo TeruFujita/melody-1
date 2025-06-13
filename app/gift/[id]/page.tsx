@@ -5,12 +5,13 @@ import { HeartIcon, ShareIcon } from "lucide-react";
 import Link from "next/link";
 
 interface GiftPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function GiftPage({ params }: GiftPageProps) {
+export default async function GiftPage({ params }: GiftPageProps) {
+  const resolvedParams = await params;
   // 実際のアプリでは、ここでIDを使ってDBからデータを取得する
 
   //仮の音楽データ

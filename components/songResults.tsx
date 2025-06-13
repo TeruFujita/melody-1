@@ -128,8 +128,6 @@ export default function SongResults({
                       height={96}
                       src={song.image || "/placeholder.svg"}
                       alt={song.title}
-                      width={50}
-                      height={50}
                       className="w-full h-full object-cover rounded-lg"
                     />
                   </div>
