@@ -7,8 +7,11 @@ import CardCreator from "../../components/cardCreator";
 import { Navbar } from "@/components/navbar";
 import { extractSongsAsJson } from "@/lib/utils";
 import { Song } from "@/types/song";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { SupabaseClient } from "@supabase/supabase-js";
 
-type Step = "input" | "results" | "create";
+type Step = "input" | "results" | "create" | "loading" | "result";
 
 type SpotifyTrack = {
   id: string;
@@ -45,6 +48,8 @@ export default function Create() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   // 表示済み曲のキー履歴を管理
   const [shownSongKeys, setShownSongKeys] = useState<string[]>([]);
+  // 現在表示中の曲を保持
+  const [currentDisplaySongs, setCurrentDisplaySongs] = useState<Song[]>([]);
 
   // 曲の一意キーを生成
   function getSongKey(song: Song) {
@@ -135,7 +140,7 @@ export default function Create() {
           preview_url: matchedTrack?.preview_url || undefined,
           spotify_url: matchedTrack?.spotify_url,
           id: matchedTrack?.id ? parseInt(matchedTrack.id) : undefined,
-          youtubeVideoId, // ← 追加！
+          youtubeVideoId,
         });
       } catch {
         updatedSongs.push(song);
@@ -145,6 +150,7 @@ export default function Create() {
     // 履歴を更新
     setShownSongKeys((prev) => [...prev, ...updatedSongs.map(getSongKey)]);
     setSongs(updatedSongs);
+    setCurrentDisplaySongs(updatedSongs);
     setSelectedSong(null);
     console.log("updatedSongs:", updatedSongs);
   };
@@ -171,25 +177,43 @@ export default function Create() {
 
     // --- 履歴を保存 ---
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await (supabase as SupabaseClient).auth.getUser();
+      if (!user) {
+        console.warn("ユーザーがログインしていません");
+        return;
+      }
+
       // emotionが空の場合は"未入力"で補完
       let saveEmotion = emotion;
       if (!saveEmotion) saveEmotion = "未入力";
-      if (user) {
-        await fetch("/api/history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: user.id,
-            emotion: saveEmotion,
-            songTitle: song.title,
-            songArtist: song.artist,
-            songImageUrl: song.image,
-            spotifyUrl: song.spotify_url || spotify_url,
-          }),
-        });
+
+      const historyData = {
+        user_id: user.id,
+        emotion: saveEmotion,
+        songTitle: song.title,
+        songArtist: song.artist,
+        songImageUrl: song.image,
+        spotifyUrl: song.spotify_url || spotify_url,
+      };
+
+      console.log("保存する履歴データ:", historyData);
+
+      const response = await fetch("/api/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(historyData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("履歴保存エラー:", errorData);
+        throw new Error(`履歴の保存に失敗しました: ${errorData.error}`);
       }
-    } catch (e) { console.error("履歴保存エラー", e); }
+
+      console.log("履歴の保存に成功しました");
+    } catch (e) {
+      console.error("履歴保存エラー:", e);
+    }
   };
 
   const handleRetry = async () => {
@@ -285,7 +309,7 @@ export default function Create() {
                 }`}
                 onClick={() => {
                   if (emotion) {
-                    if (displaySongs.length > 0) setSongs(displaySongs);
+                    if (currentDisplaySongs.length > 0) setSongs(currentDisplaySongs);
                     setStep("results");
                   }
                 }}
