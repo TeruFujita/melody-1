@@ -39,7 +39,7 @@ const config: NextConfig = {
   },
   // ビルド設定の最適化
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
     ignoreDuringBuilds: true,
