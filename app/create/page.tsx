@@ -177,7 +177,7 @@ export default function Create() {
 
     // --- 履歴を保存 ---
     try {
-      const { data: { user } } = await (supabase as SupabaseClient).auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.warn("ユーザーがログインしていません");
         return;
