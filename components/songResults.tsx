@@ -138,7 +138,7 @@ export default function SongResults({
                     <p className="text-sm text-gray-500 truncate">
                       {song.artist}
                     </p>
-                    <div className="mt-2">
+                    <div className="mt-2 flex flex-col gap-2">
                       <Button
                         variant="outline"
                         size="sm"
@@ -163,31 +163,27 @@ export default function SongResults({
                         />
                         {isLiked(songKey) ? "いいね済み" : "いいね"}
                       </Button>
+                      <div
+                        id={`player-${songKey}`}
+                        ref={(el) => {
+                          playerRefs.current[songKey] = el;
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-blue-600 mt-2"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handlePlay(song, songKey);
+                        }}
+                      >
+                        {activeVideoId === song.youtubeVideoId
+                          ? "停止"
+                          : "プレビュー再生"}
+                      </Button>
                     </div>
-                    {song.youtubeVideoId && (
-                      <>
-                        <div
-                          id={`player-${songKey}`}
-                          ref={(el) => {
-                            playerRefs.current[songKey] = el;
-                          }}
-                        />
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-blue-600 mt-2"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handlePlay(song, songKey);
-                          }}
-                        >
-                          {activeVideoId === song.youtubeVideoId
-                            ? "停止"
-                            : "プレビュー再生"}
-                        </Button>
-                      </>
-                    )}
                   </div>
                 </div>
               </div>
