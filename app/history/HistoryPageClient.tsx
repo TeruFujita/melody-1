@@ -72,7 +72,7 @@ export default function HistoryPageClient() {
                         className="relative group border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                         onClick={() => {
                           if (item.spotifyUrl) {
-                            window.open(item.spotifyUrl, '_blank');
+                            window.open(item.spotifyUrl, "_blank");
                           }
                         }}
                       >
@@ -105,7 +105,7 @@ export default function HistoryPageClient() {
                             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.open(item.spotifyUrl, '_blank');
+                              window.open(item.spotifyUrl, "_blank");
                             }}
                           >
                             <ExternalLink className="h-5 w-5 text-green-500" />

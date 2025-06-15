@@ -71,7 +71,7 @@ export default function LikesPageClient() {
                         className="relative group border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                         onClick={() => {
                           if (item.spotifyUrl) {
-                            window.open(item.spotifyUrl, '_blank');
+                            window.open(item.spotifyUrl, "_blank");
                           }
                         }}
                       >
@@ -102,19 +102,19 @@ export default function LikesPageClient() {
                               className="opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                window.open(item.spotifyUrl, '_blank');
+                                window.open(item.spotifyUrl, "_blank");
                               }}
                             >
                               <ExternalLink className="h-5 w-5 text-green-500" />
                             </Button>
                           )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Heart className="h-5 w-5 text-red-500" />
-                        </Button>
+                          >
+                            <Heart className="h-5 w-5 text-red-500" />
+                          </Button>
                         </div>
                       </div>
                     ))}

@@ -1,8 +1,8 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 // Geminiの返答から曲名とアーティスト名を抽出する関数
@@ -18,7 +18,9 @@ export function extractSongsFromGeminiResponse(response: string): SongInfo[] {
 
   for (const block of songBlocks) {
     // 曲名
-    const titleMatch = block.match(/^(.+?)\n\s*\*\*アーティスト名:\*\*\s*(.+)$/m);
+    const titleMatch = block.match(
+      /^(.+?)\n\s*\*\*アーティスト名:\*\*\s*(.+)$/m
+    );
     if (titleMatch) {
       const title = titleMatch[1].trim();
       const artistLine = titleMatch[2];
@@ -34,7 +36,9 @@ export function extractSongsFromGeminiResponse(response: string): SongInfo[] {
 }
 
 // Geminiの返答から曲名とアーティスト名だけを抽出し、JSON配列で返す関数
-export function extractSongsAsJson(response: string): { title: string; artist: string }[] {
+export function extractSongsAsJson(
+  response: string
+): { title: string; artist: string }[] {
   const songList: { title: string; artist: string }[] = [];
   // 曲名とアーティスト名を抽出する正規表現
   const regex = /曲名:\s*([^\n]+)[\s\S]*?アーティスト名:\s*([^\n]+)/g;

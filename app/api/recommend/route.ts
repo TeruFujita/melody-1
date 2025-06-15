@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
 // Gemini APIクライアントの初期化
-const { GoogleGenerativeAI } = await import('@google/generative-ai');
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const { GoogleGenerativeAI } = await import("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 const SYSTEM_PROMPT = `あなたは日本の音楽キュレーターです。ユーザーの感情や状況を最重要視し、その気持ちに最も合致する日本の楽曲を厳選して提案してください。
 - 2000年以降の曲を優先
@@ -21,13 +21,15 @@ async function getSpotifyToken() {
   const client_id = process.env.SPOTIFY_CLIENT_ID;
   const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
 
-  const response = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
+  const response = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64')
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization:
+        "Basic " +
+        Buffer.from(client_id + ":" + client_secret).toString("base64"),
     },
-    body: 'grant_type=client_credentials'
+    body: "grant_type=client_credentials",
   });
 
   const data = await response.json();
@@ -35,14 +37,20 @@ async function getSpotifyToken() {
 }
 
 // Spotifyで曲を検索
-async function searchSpotifyTrack(title: string, artist: string, token: string) {
+async function searchSpotifyTrack(
+  title: string,
+  artist: string,
+  token: string
+) {
   const query = `${title} ${artist}`;
   const response = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`,
+    `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+      query
+    )}&type=track&limit=1`,
     {
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
 
@@ -52,8 +60,9 @@ async function searchSpotifyTrack(title: string, artist: string, token: string) 
     return {
       title: track.name,
       artist: track.artists[0].name,
-      image: track.album.images[0]?.url || '/placeholder.svg?height=300&width=300',
-      spotify_url: track.external_urls.spotify
+      image:
+        track.album.images[0]?.url || "/placeholder.svg?height=300&width=300",
+      spotify_url: track.external_urls.spotify,
     };
   }
   return null;
@@ -64,7 +73,10 @@ export async function POST(req: Request) {
     const { emotion } = await req.json();
 
     if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json({ error: 'APIキーが設定されていません' }, { status: 500 });
+      return NextResponse.json(
+        { error: "APIキーが設定されていません" },
+        { status: 500 }
+      );
     }
 
     // Geminiから曲のリストを取得
@@ -79,7 +91,10 @@ export async function POST(req: Request) {
     try {
       songs = JSON.parse(songsJson);
     } catch {
-      return NextResponse.json({ error: "Geminiの返答が不正です", raw: songsJson }, { status: 500 });
+      return NextResponse.json(
+        { error: "Geminiの返答が不正です", raw: songsJson },
+        { status: 500 }
+      );
     }
 
     // Spotify APIのトークンを取得
@@ -88,25 +103,31 @@ export async function POST(req: Request) {
     // 各曲のSpotify情報を取得
     const spotifySongs = await Promise.all(
       songs.map(async (song: { title: string; artist: string }) => {
-        const spotifyTrack = await searchSpotifyTrack(song.title, song.artist, token);
+        const spotifyTrack = await searchSpotifyTrack(
+          song.title,
+          song.artist,
+          token
+        );
         if (spotifyTrack) {
           return spotifyTrack;
         }
         // Spotifyで見つからない場合は元の情報を使用
         return {
           ...song,
-          image: '/placeholder.svg?height=300&width=300',
-          spotify_url: `https://open.spotify.com/search/${encodeURIComponent(`${song.title} ${song.artist}`)}`
+          image: "/placeholder.svg?height=300&width=300",
+          spotify_url: `https://open.spotify.com/search/${encodeURIComponent(
+            `${song.title} ${song.artist}`
+          )}`,
         };
       })
     );
 
     return NextResponse.json({ songs: spotifySongs });
   } catch (error: any) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to get recommendations" },
       { status: 500 }
     );
   }
-} 
+}

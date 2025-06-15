@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 // 動的インポートを使用
-const { GoogleGenerativeAI } = await import('@google/generative-ai');
+const { GoogleGenerativeAI } = await import("@google/generative-ai");
 
 // Gemini APIクライアントの初期化
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 // 定数
 const SYSTEM_PROMPT = `あなたは日本の音楽キュレーターです。ユーザーの感情や状況を最重要視し、その気持ちに最も合致する日本の楽曲を厳選して提案してください。
@@ -21,7 +21,7 @@ const SYSTEM_PROMPT = `あなたは日本の音楽キュレーターです。ユ
 - 同じ曲が連続しないようにしてください`;
 
 // リトライ用の待機関数
-const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // リトライロジック
 async function retryWithBackoff<T>(
@@ -37,10 +37,12 @@ async function retryWithBackoff<T>(
       return await fn();
     } catch (error) {
       if (retries >= maxRetries) throw error;
-      
+
       // 429エラー（Too Many Requests）の場合のみリトライ
-      if (error instanceof Error && error.message.includes('429')) {
-        console.log(`Retrying after ${delay}ms... (Attempt ${retries + 1}/${maxRetries})`);
+      if (error instanceof Error && error.message.includes("429")) {
+        console.log(
+          `Retrying after ${delay}ms... (Attempt ${retries + 1}/${maxRetries})`
+        );
         await wait(delay);
         retries++;
         delay *= 2; // 指数バックオフ
@@ -52,52 +54,52 @@ async function retryWithBackoff<T>(
 }
 
 export async function POST(request: Request) {
-    try {
-      // リクエストボディの取得
-      const { text } = await request.json();
-      console.log('Received text:', text);
-  
-      // 環境変数のチェック
-      if (!process.env.GEMINI_API_KEY) {
-        console.error('GEMINI_API_KEY is not defined');
-        return NextResponse.json(
-          { error: 'APIキーが設定されていません' },
-          { status: 500 }
-        );
-      }
-  
-      // Gemini APIの呼び出し
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-      const prompt = `${SYSTEM_PROMPT}\n\nユーザーの感情・状況: ${text}`;
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const keywords = response.text();
-      
-      console.log('Generated keywords:', keywords);
-  
-      return NextResponse.json({ keywords });
-    } catch (error) {
-      // エラーハンドリングの改善
-      console.error('Server error:', error);
-      let errorDetails = '不明なエラーが発生しました';
-      
-      if (error instanceof Error) {
-        errorDetails = error.message;
-        // エラーオブジェクトの詳細情報をログに出力
-        console.error('Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        });
-      }
-      
+  try {
+    // リクエストボディの取得
+    const { text } = await request.json();
+    console.log("Received text:", text);
+
+    // 環境変数のチェック
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("GEMINI_API_KEY is not defined");
       return NextResponse.json(
-        { 
-          error: '感情分析に失敗しました',
-          details: errorDetails,
-          timestamp: new Date().toISOString()
-        },
+        { error: "APIキーが設定されていません" },
         { status: 500 }
       );
     }
+
+    // Gemini APIの呼び出し
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const prompt = `${SYSTEM_PROMPT}\n\nユーザーの感情・状況: ${text}`;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const keywords = response.text();
+
+    console.log("Generated keywords:", keywords);
+
+    return NextResponse.json({ keywords });
+  } catch (error) {
+    // エラーハンドリングの改善
+    console.error("Server error:", error);
+    let errorDetails = "不明なエラーが発生しました";
+
+    if (error instanceof Error) {
+      errorDetails = error.message;
+      // エラーオブジェクトの詳細情報をログに出力
+      console.error("Error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
+    }
+
+    return NextResponse.json(
+      {
+        error: "感情分析に失敗しました",
+        details: errorDetails,
+        timestamp: new Date().toISOString(),
+      },
+      { status: 500 }
+    );
+  }
 }

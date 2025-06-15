@@ -1,11 +1,22 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
 import { supabase } from "@/lib/supabase";
 
 interface LikeContextType {
   likedSongs: Set<string>;
-  toggleLike: (song: { title: string; artist: string; image: string; spotify_url?: string }) => Promise<void>;
+  toggleLike: (song: {
+    title: string;
+    artist: string;
+    image: string;
+    spotify_url?: string;
+  }) => Promise<void>;
   isLiked: (songKey: string) => boolean;
   refreshLikes: () => Promise<void>;
 }
@@ -17,7 +28,9 @@ export function LikeProvider({ children }: { children: ReactNode }) {
 
   // GoogleログインユーザーのいいねをSupabaseから取得
   const refreshLikes = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       setLikedSongs(new Set());
       return;
@@ -27,7 +40,9 @@ export function LikeProvider({ children }: { children: ReactNode }) {
       .select("songTitle,songArtist")
       .eq("user_id", user.id);
     if (error) return;
-    const keys = data.map((item: any) => `${item.songTitle}-${item.songArtist}`);
+    const keys = data.map(
+      (item: any) => `${item.songTitle}-${item.songArtist}`
+    );
     setLikedSongs(new Set(keys));
   };
 
@@ -35,8 +50,16 @@ export function LikeProvider({ children }: { children: ReactNode }) {
     refreshLikes();
   }, []);
 
-  const toggleLike = async (song: { title: string; artist: string; image: string; spotify_url?: string }) => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+  const toggleLike = async (song: {
+    title: string;
+    artist: string;
+    image: string;
+    spotify_url?: string;
+  }) => {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
     if (!user) return;
     const songKey = `${song.title}-${song.artist}`;
     if (likedSongs.has(songKey)) {
@@ -89,7 +112,9 @@ export function LikeProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <LikeContext.Provider value={{ likedSongs, toggleLike, isLiked, refreshLikes }}>
+    <LikeContext.Provider
+      value={{ likedSongs, toggleLike, isLiked, refreshLikes }}
+    >
       {children}
     </LikeContext.Provider>
   );
@@ -101,4 +126,4 @@ export function useLikes() {
     throw new Error("useLikes must be used within a LikeProvider");
   }
   return context;
-} 
+}
